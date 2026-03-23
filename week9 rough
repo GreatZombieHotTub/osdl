@@ -1,0 +1,153 @@
+public class Room {
+    private int roomNo;
+    private String type;
+    private double price;
+    private String status;
+
+    public Room(int roomNo, String type, double price) {
+        this.roomNo = roomNo;
+        this.type = type;
+        this.price = price;
+        this.status = "Available";
+    }
+
+    public int getRoomNo() { return roomNo; }
+    public String getType() { return type; }
+    public double getPrice() { return price; }
+    public String getStatus() { return status; }
+
+    public void setStatus(String status) { this.status = status; }
+}
+
+
+=================================================
+
+import javafx.application.Application;
+import javafx.collections.*;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+public class HotelTableGUI extends Application {
+
+    ObservableList<Room> rooms = FXCollections.observableArrayList();
+
+    @Override
+    public void start(Stage stage) {
+
+        // Inputs
+        TextField txtRoomNo = new TextField();
+        TextField txtPrice = new TextField();
+        TextField txtCust = new TextField();
+
+        ComboBox<String> cmbType = new ComboBox<>();
+        cmbType.getItems().addAll("Single", "Double", "Deluxe");
+
+        Label lblMsg = new Label();
+
+        // TableView
+        TableView<Room> table = new TableView<>(rooms);
+
+        TableColumn<Room, Integer> colNo = new TableColumn<>("Room No");
+        colNo.setCellValueFactory(data ->
+                new javafx.beans.property.SimpleIntegerProperty(data.getValue().getRoomNo()).asObject());
+
+        TableColumn<Room, String> colType = new TableColumn<>("Type");
+        colType.setCellValueFactory(data ->
+                new javafx.beans.property.SimpleStringProperty(data.getValue().getType()));
+
+        TableColumn<Room, Double> colPrice = new TableColumn<>("Price");
+        colPrice.setCellValueFactory(data ->
+                new javafx.beans.property.SimpleDoubleProperty(data.getValue().getPrice()).asObject());
+
+        TableColumn<Room, String> colStatus = new TableColumn<>("Status");
+        colStatus.setCellValueFactory(data ->
+                new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus()));
+
+        table.getColumns().addAll(colNo, colType, colPrice, colStatus);
+
+        // Buttons
+        Button btnAdd = new Button("Add Room");
+        Button btnBook = new Button("Book");
+        Button btnCheckout = new Button("Checkout");
+
+        // Add Room
+        btnAdd.setOnAction(e -> {
+            try {
+                int no = Integer.parseInt(txtRoomNo.getText());
+                double price = Double.parseDouble(txtPrice.getText());
+                String type = cmbType.getValue();
+
+                rooms.add(new Room(no, type, price));
+                lblMsg.setText("Room added!");
+
+                txtRoomNo.clear();
+                txtPrice.clear();
+                cmbType.setValue(null);
+            } catch (Exception ex) {
+                lblMsg.setText("Enter valid details!");
+            }
+        });
+
+        // Book Room
+        btnBook.setOnAction(e -> {
+            Room r = table.getSelectionModel().getSelectedItem();
+            String name = txtCust.getText();
+
+            if (name.trim().isEmpty()) {
+                lblMsg.setText("Enter customer name!");
+                return;
+            }
+
+            if (r != null && r.getStatus().equals("Available")) {
+                r.setStatus("Booked by " + name);
+                table.refresh();
+                lblMsg.setText("Room booked!");
+                txtCust.clear();
+            } else {
+                lblMsg.setText("Select available room!");
+            }
+        });
+
+        // Checkout
+        btnCheckout.setOnAction(e -> {
+            Room r = table.getSelectionModel().getSelectedItem();
+
+            if (r != null && r.getStatus().startsWith("Booked")) {
+                r.setStatus("Available");
+                table.refresh();
+                lblMsg.setText("Checked out!");
+            } else {
+                lblMsg.setText("Select booked room!");
+            }
+        });
+
+        // Layout
+        GridPane form = new GridPane();
+        form.setHgap(10);
+        form.setVgap(10);
+
+        form.add(new Label("Room No:"), 0, 0);
+        form.add(txtRoomNo, 1, 0);
+        form.add(new Label("Type:"), 0, 1);
+        form.add(cmbType, 1, 1);
+        form.add(new Label("Price:"), 0, 2);
+        form.add(txtPrice, 1, 2);
+        form.add(new Label("Customer:"), 0, 3);
+        form.add(txtCust, 1, 3);
+
+        HBox buttons = new HBox(10, btnAdd, btnBook, btnCheckout);
+
+        VBox root = new VBox(10, form, buttons, table, lblMsg);
+
+        Scene scene = new Scene(root, 500, 400);
+        stage.setTitle("Hotel Management System");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
